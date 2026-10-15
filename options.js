@@ -248,4 +248,5 @@ Promise.all([gcsLoadRules(), gcsLoadSettings()]).then(([loadedRules, loadedSetti
 
   rules.forEach(renderRule);
   settings.exceptions.forEach(renderException);
+  requestAnimationFrame(() => document.body.classList.remove("preload"));
 });

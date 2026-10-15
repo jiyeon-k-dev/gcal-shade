@@ -19,6 +19,8 @@
     h2 { font-size: 12px; font-weight: 600; margin: 16px 0 8px; color: var(--sub); }
     .hint { color: var(--sub); font-size: 12px; margin: 6px 0 0; }
     body.off main { opacity: .45; pointer-events: none; }
+    /* 저장된 값을 채우는 동안 스위치 애니메이션이 돌지 않게 */
+    body.preload * { transition: none !important; }
 
     /* ── 공통: 스위치 ── */
     .switch { position: relative; display: inline-block; width: 34px; height: 20px; flex: none; }
@@ -69,7 +71,7 @@
     .sub-toggle { display: flex; align-items: center; gap: 6px; color: var(--sub); font-size: 12px; }
   </style>
 </head>
-<body>
+<body class="preload">
   <header>
     <h1>GCal Shade</h1>
     <label class="switch" title="전체 켜기/끄기"><input type="checkbox" id="enabled" /><span></span></label>
