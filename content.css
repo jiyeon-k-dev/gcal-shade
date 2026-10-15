@@ -10,8 +10,9 @@
   right: 0;
 }
 
-/* 구글 캘린더 원래 시간 가로선 숨김 (content.js가 선 컨테이너를 찾아 클래스를 붙임) */
-.gcs-hide-hline {
+/* 구글 캘린더 원래 시간 가로선 숨김: 날짜 컬럼과 같은 row의 "자식 24개짜리 aria-hidden 컨테이너".
+   구조 선택자라 보기 전환으로 다시 그려져도 항상 적용된다. (content.js의 LINES_SELECTOR와 동일) */
+html.gcs-on [role="row"]:has(> [role="gridcell"][data-datekey]) > [aria-hidden="true"]:has(> :nth-child(24):last-child) {
   visibility: hidden !important;
 }
 

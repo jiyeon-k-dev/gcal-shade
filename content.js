@@ -6,7 +6,8 @@
 // 시간 그리드 컬럼은 하루 24시간 전체 높이를 가지므로 % 단위로 위치를 잡는다.
 (() => {
   const LAYER_CLASS = "gcs-layer";
-  const HIDE_CLASS = "gcs-hide-hline";
+  // 숨김 규칙은 content.css에 있고, <html>에 이 클래스가 있을 때만 적용된다.
+  const ON_CLASS = "gcs-on";
   let lineColor = null; // 캘린더 원래 가로선 색 (찾으면 채워짐)
   const PAST_CLASS = "gcs-past";
   let rules = [];
@@ -85,19 +86,17 @@
 
   // 시간 가로선은 날짜 컬럼들과 같은 row 안의 aria-hidden 컨테이너(시간별 div 24개)가 그린다.
   //   <div role="row"><div aria-hidden="true">[div x 24]</div> ... <div role="gridcell"> ...
-  // 이 컨테이너를 통째로 숨기고, 칠하지 않은 구간에만 레이어가 선을 다시 그린다.
-  function hideHourLines(cols) {
-    const row = cols[0].parentElement;
-    const lines = [...row.children].find(
-      (el) => el.getAttribute("aria-hidden") === "true" && el.children.length === 24
-    );
-    if (!lines) return;
-    if (!lineColor) lineColor = detectLineColor(lines.children[1]);
-    lines.classList.add(HIDE_CLASS);
-  }
+  // 보기 전환 때 이 컨테이너만 새로 그려지기도 해서, 숨김은 content.css의 구조 선택자로 처리하고
+  // 여기서는 원래 선 색만 한 번 읽어 온다. (선택자는 content.css와 같게 유지)
+  const LINES_SELECTOR =
+    '[role="row"]:has(> [role="gridcell"][data-datekey]) > [aria-hidden="true"]:has(> :nth-child(24):last-child)';
 
-  function restoreHourLines() {
-    document.querySelectorAll(`.${HIDE_CLASS}`).forEach((el) => el.classList.remove(HIDE_CLASS));
+  function ensureLineColor() {
+    if (lineColor) return;
+    const lines = document.querySelector(LINES_SELECTOR);
+    if (!lines) return;
+    lineColor = detectLineColor(lines.children[1]);
+    document.querySelectorAll(`.${LAYER_CLASS}`).forEach(paintOwnLines);
   }
 
   // 시간 칸의 테두리나 ::before/::after 중 실제로 선을 그리는 쪽의 색을 읽는다.
@@ -128,12 +127,11 @@
 
   function renderColumn(col) {
     const date = decodeDateKey(col.getAttribute("data-datekey"));
-    if (!date) return false;
+    if (!date) return;
     const colSig = `${col.getAttribute("data-datekey")}|${sig}`;
 
     let layer = col.querySelector(`:scope > .${LAYER_CLASS}`);
-    if (layer && layer.dataset.sig === colSig) return false;
-    const created = !layer;
+    if (layer && layer.dataset.sig === colSig) return;
 
     if (!layer) {
       layer = document.createElement("div");
@@ -141,6 +139,7 @@
       if (getComputedStyle(col).position === "static") col.style.position = "relative";
       // 첫 자식으로 넣어야 이벤트 칩보다 아래에 그려진다.
       col.prepend(layer);
+      paintOwnLines(layer);
     }
     layer.dataset.sig = colSig;
     layer.dataset.date = gcsDateStr(date);
@@ -167,7 +166,6 @@
     past.className = PAST_CLASS;
     layer.replaceChildren(...bands, past);
     updatePast(layer);
-    return created;
   }
 
   // 오늘은 현재 시각까지, 지난 날은 하루 전체를 흐리게
@@ -187,19 +185,13 @@
 
   function render() {
     scheduled = false;
+    document.documentElement.classList.toggle(ON_CLASS, settings.enabled);
     if (!settings.enabled) {
       document.querySelectorAll(`.${LAYER_CLASS}`).forEach((el) => el.remove());
-      restoreHourLines();
       return;
     }
-    const cols = findDayColumns();
-    let created = false;
-    for (const col of cols) created = renderColumn(col) || created;
-    // 새 주/보기로 DOM이 새로 그려졌을 때만 선을 다시 찾는다.
-    if (created && cols.length) {
-      hideHourLines(cols);
-      document.querySelectorAll(`.${LAYER_CLASS}`).forEach(paintOwnLines);
-    }
+    ensureLineColor();
+    for (const col of findDayColumns()) renderColumn(col);
   }
 
   function schedule() {
