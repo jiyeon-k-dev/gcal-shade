@@ -1,0 +1,44 @@
+.gcs-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.gcs-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+/* 구글 캘린더 원래 시간 가로선 숨김 (content.js가 선 컨테이너를 찾아 클래스를 붙임) */
+.gcs-hide-hline {
+  visibility: hidden !important;
+}
+
+/* 구간 이름: 밴드 왼쪽 위 작은 글씨 */
+.gcs-label {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  font-size: 11px;
+  line-height: 14px;
+  color: rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: calc(100% - 12px);
+}
+.gcs-dark .gcs-label {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* 지나간 시간: 배경을 살짝 바래게 */
+.gcs-past {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.5);
+}
+.gcs-dark .gcs-past {
+  background: rgba(0, 0, 0, 0.35);
+}

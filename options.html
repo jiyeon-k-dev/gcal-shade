@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>GCal Shade 설정</title>
+  <style>
+    :root {
+      --text: #202124;
+      --sub: #5f6368;
+      --line: #dadce0;
+      --accent: #1a73e8;
+      --danger: #d93025;
+      --chip: #f1f3f4;
+    }
+    * { box-sizing: border-box; }
+    body { font: 13px/1.4 -apple-system, "Apple SD Gothic Neo", sans-serif; margin: 0; padding: 16px; width: 400px; color: var(--text); }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    h1 { font-size: 15px; margin: 0; }
+    h2 { font-size: 12px; font-weight: 600; margin: 16px 0 8px; color: var(--sub); }
+    .hint { color: var(--sub); font-size: 12px; margin: 6px 0 0; }
+    body.off main { opacity: .45; pointer-events: none; }
+
+    /* ── 공통: 스위치 ── */
+    .switch { position: relative; display: inline-block; width: 34px; height: 20px; flex: none; }
+    .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .switch span { position: absolute; inset: 0; background: #bdc1c6; border-radius: 10px; cursor: pointer; transition: background .15s; }
+    .switch span::before { content: ""; position: absolute; width: 16px; height: 16px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: transform .15s; }
+    .switch input:checked + span { background: var(--accent); }
+    .switch input:checked + span::before { transform: translateX(14px); }
+    .switch.sm { width: 28px; height: 16px; }
+    .switch.sm span::before { width: 12px; height: 12px; }
+    .switch.sm input:checked + span::before { transform: translateX(12px); }
+
+    /* ── 공통: 설정 한 줄 (라벨 + 스위치) ── */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
+
+    /* ── 공통: 카드 ── */
+    .card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: grid; gap: 10px; }
+    .card-head { display: flex; align-items: center; gap: 8px; }
+    .card.disabled .card-body { opacity: .4; pointer-events: none; }
+    .card-body { display: grid; gap: 10px; }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .field-label { color: var(--sub); font-size: 12px; width: 40px; flex: none; }
+
+    /* ── 공통: 입력/버튼 ── */
+    .name { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+    .name:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+    input[type="time"], input[type="date"] { padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+    button { font: inherit; cursor: pointer; }
+    .icon-btn { width: 26px; height: 26px; border: none; border-radius: 50%; background: none; color: var(--sub); font-size: 16px; line-height: 1; flex: none; }
+    .icon-btn:hover { background: var(--chip); color: var(--danger); }
+    .add-btn { width: 100%; padding: 7px; border: 1px dashed var(--line); border-radius: 10px; background: none; color: var(--accent); }
+    .add-btn:hover { background: #f8fbff; border-color: var(--accent); }
+
+    /* 요일 칩 */
+    .days { gap: 4px; }
+    .day { width: 30px; height: 26px; border: 1px solid var(--line); border-radius: 13px; background: #fff; color: var(--sub); font-size: 12px; }
+    .day.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* 색 선택 */
+    .colors { gap: 6px; }
+    .preset, .custom { position: relative; width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); }
+    .preset.active, .custom.active { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .custom { overflow: hidden; background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+    .custom input { position: absolute; inset: -4px; opacity: 0; cursor: pointer; }
+    .custom.active { background: none; }
+    input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .pct { width: 34px; text-align: right; color: var(--sub); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .sub-toggle { display: flex; align-items: center; gap: 6px; color: var(--sub); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GCal Shade</h1>
+    <label class="switch" title="전체 켜기/끄기"><input type="checkbox" id="enabled" /><span></span></label>
+  </header>
+
+  <main>
+    <div class="toggle-row">
+      <span>지나간 시간 흐리게</span>
+      <label class="switch sm"><input type="checkbox" id="dimPast" /><span></span></label>
+    </div>
+
+    <h2>규칙</h2>
+    <div id="rules"></div>
+    <button id="add-rule" class="add-btn">+ 규칙 추가</button>
+    <p class="hint">종료가 시작보다 이르면 자정을 넘는 구간(예: 23:00 → 07:00)으로 처리합니다.</p>
+
+    <h2>예외 기간 (공휴일·휴가)</h2>
+    <div id="exceptions"></div>
+    <button id="add-exc" class="add-btn">+ 예외 추가</button>
+    <p class="hint">예외 기간에는 "예외일엔 칠하지 않음"이 켜진 규칙만 빠집니다.</p>
+  </main>
+
+  <template id="rule-tpl">
+    <div class="card">
+      <div class="card-head">
+        <label class="switch sm" title="이 규칙 켜기/끄기"><input type="checkbox" class="enabled" /><span></span></label>
+        <input class="name" placeholder="이름 (캘린더에 표시됨, 예: 업무)" />
+        <button class="icon-btn del" title="삭제">×</button>
+      </div>
+      <div class="card-body">
+        <div class="row days"></div>
+        <div class="row">
+          <span class="field-label">시간</span>
+          <input type="time" class="start" step="900" /> ~ <input type="time" class="end" step="900" />
+        </div>
+        <div class="row colors">
+          <span class="field-label">색</span>
+        </div>
+        <div class="row">
+          <span class="field-label">진하기</span>
+          <input type="range" class="opacity" min="0.05" max="1" step="0.01" />
+          <span class="pct"></span>
+        </div>
+        <label class="sub-toggle">
+          <span class="switch sm"><input type="checkbox" class="skip-exc" /><span></span></span>
+          예외일엔 칠하지 않음
+        </label>
+      </div>
+    </div>
+  </template>
+
+  <template id="exc-tpl">
+    <div class="card">
+      <div class="card-head">
+        <label class="switch sm" title="이 예외 켜기/끄기"><input type="checkbox" class="enabled" /><span></span></label>
+        <input class="name" placeholder="메모 (예: 추석 연휴)" />
+        <button class="icon-btn del" title="삭제">×</button>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <span class="field-label">기간</span>
+          <input type="date" class="from" /> ~ <input type="date" class="to" />
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="shared.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

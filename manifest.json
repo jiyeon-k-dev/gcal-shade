@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "GCal Shade",
+  "version": "0.1.0",
+  "description": "구글 캘린더 주/일 보기의 특정 시간대에 배경색을 칠합니다.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "options.html",
+    "default_title": "GCal Shade 설정"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://calendar.google.com/*"
+      ],
+      "js": [
+        "shared.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzXhPSbIrOP4IU5kGIGzJIZzDOnyx7O01HehgHlF7K6b4BHbAU+8dTsY3CTn1mJojuJeflCb5CsHJLtltaUChyimFPFiZ/wOg8M7dXuHQYyWTGnGZcxh2NoIiMPZ0SSy4sthfIKQQRCd5DDUUOi+XIVvu28PKP7023qezqgLc9vuA++e7p0Np+XSpfx0PpENzRBIOpZLZ+H9rtjf72gBn6GJZ3wipHuRwZhW53iGoe6Ix1Wn7zSu4koTbgVsOchawz6eBlOir11EutqkV807NGeB4PO0Zif5mn0QfiBfNzWT8lk3kyK8NbRyhhur08t3bGg8wTPtjew2sA6VRU8siEwIDAQAB"
+}
